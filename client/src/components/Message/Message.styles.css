@@ -1,0 +1,37 @@
+.currentUser,
+.anotherUser{
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 5px;
+}
+
+.currentUser{
+    background-color: rgb(202, 202, 202);
+}
+
+.anotherUser{
+    background-color: rgb(219, 219, 219);
+}
+
+.currentUser .msgUsername,
+.anotherUser .msgUsername{
+    color: rgb(83, 83, 83);
+}
+
+.anotherUser .msgText,
+.currentUser .msgText{
+    margin-top: 10px;
+}
+
+.anotherUser .date,
+.currentUser .date{
+    font-size: 13px;
+}
+
+.serverMessage{
+    background-color: rgb(250, 238, 169);
+    padding: 10px;
+    margin-bottom: 5px;
+    color: rgb(83, 83, 83);
+}
