@@ -82,19 +82,19 @@ export const loginUser = (userData: {username: string, email: string, password: 
         }
     }catch(err){
         console.log(err)
-        // const errors = err.response.data.error
-        // dispatch({type: userTypes.LOGIN_FAILURE, payload: errors})
+        const errors = err.response.data.errors
+        dispatch({type: userTypes.LOGIN_FAILURE, payload: errors})
 
-        // if(errors){
-        //     errors.forEach((error: {msg:string}) => {
-        //         console.log(error.msg)
-        //         let msg = error.msg
-        //         const id = uuidv4()
-        //         const alertType = "danger"
-        //         dispatch({type: errorTypes.ERROR, payload: {msg, alertType, id}})
-        //         setTimeout(() => dispatch({type: errorTypes.REMOVE_ERROR, payload: id}), 3000)
-        //     });
-        // }
+        if(errors){
+            errors.forEach((error: {msg:string}) => {
+                console.log(error.msg)
+                let msg = error.msg
+                const id = uuidv4()
+                const alertType = "danger"
+                dispatch({type: errorTypes.ERROR, payload: {msg, alertType, id}})
+                setTimeout(() => dispatch({type: errorTypes.REMOVE_ERROR, payload: id}), 3000)
+            });
+        }
     }
 }
 

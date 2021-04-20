@@ -1,12 +1,18 @@
 import React, {useState, useEffect} from 'react'
 
+interface IUsers{
+    username: string, 
+    email: string, 
+    isAdmin: boolean
+}
+
 const AllUsers = ({socket}) => {
-    const [fetchAllUsers, setFetchAllUsers] = useState([])
+    const [fetchAllUsers, setFetchAllUsers] = React.useState<IUsers[]>([])
 
     useEffect(() => {
         socket.emit("fetchAllUsers")
     
-        socket.on("fetchAllUsers", (users) => {
+        socket.on("fetchAllUsers", (users: IUsers[]) => {
             if(users.length > 0){
                 setFetchAllUsers(users)
             }
@@ -14,21 +20,21 @@ const AllUsers = ({socket}) => {
         
     }, [fetchAllUsers])
 
-    const banUser = (username) => {
+    const banUser = (username: string) => {
         console.log("banned")
         socket.emit("banUser", username)
     }
 
-    const unbanUser = (username) => {
+    const unbanUser = (username: string) => {
         console.log("unbanned")
         socket.emit("unBanUser", username)
     }
 
-    const muteUser = (username) => {
+    const muteUser = (username: string) => {
         socket.emit("muteUserUsername", username)
     }
 
-    const unmuteUser = (username) => {
+    const unmuteUser = (username: string) => {
         socket.emit("unMuteUserUsername", username)
     }
 
