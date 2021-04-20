@@ -4,17 +4,17 @@ import {BrowserRouter as Router, Route, Switch} from "react-router-dom"
 import Header from "./components/Header/Header"
 import Login from "./components/Login/Login"
 import Chat from "./components/Chat/Chat"
-import {getUser} from "./redux/actions/userActions"
+// import {getUser} from "./redux/actions/userActions"
 import PrivateRoute from './components/PrivateRoute/PrivateRoute'
 import {connect} from 'react-redux'
 
 import ErrorAlert from "./components/ErrorAlert/ErrorAlert"
-
-function App({getUser}) {
+// {getUser}
+function App() {
   useEffect(() => {
-      getUser()
-  }, [getUser])
-
+      // getUser()
+  })
+  // , [getUser]
   return (
     <div className="App">
       <Router>
@@ -30,8 +30,9 @@ function App({getUser}) {
   );
 }
 
-const mapDispatchToProps = dispatch => ({
-  getUser: () => dispatch(getUser())
-})
+// const mapDispatchToProps = dispatch => ({
+//   getUser: () => dispatch(getUser())
+// })
 
-export default connect(null, mapDispatchToProps)(App);
+// export default connect(null, mapDispatchToProps)(App);
+export default App;

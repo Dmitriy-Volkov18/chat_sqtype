@@ -7,10 +7,12 @@ import logger from "redux-logger"
 
 const middlewares = [logger, thunk]
 
-const rootReducer = combineReducers({
+export const rootReducer = combineReducers({
     user: userReducer,
     errors: errorReducer
 })
+
+export type RootReducer = ReturnType<typeof rootReducer>
 
 const store = createStore(rootReducer, applyMiddleware(...middlewares))
 

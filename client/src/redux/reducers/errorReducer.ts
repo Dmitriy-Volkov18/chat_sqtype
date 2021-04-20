@@ -1,8 +1,15 @@
 import errorTypes from '../types/errorTypes'
+import {DispatchErrorActions} from "../actions/errorActions"
 
-const initialState = []
+interface IError{
+    msg: string,
+    alertType: string,
+    id: string
+}
 
-const errorReducer = (state = initialState, action) => {
+const initialState: IError[] = []
+
+const errorReducer = (state: IError[] = initialState, action: DispatchErrorActions): IError[] => {
     switch(action.type){
         case errorTypes.ERROR:
             return [...state, action.payload]

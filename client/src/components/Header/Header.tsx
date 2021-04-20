@@ -1,13 +1,13 @@
 import React from 'react'
-import {useDispatch, useSelector} from "react-redux"
+import {useDispatch} from "react-redux"
 import {Link} from 'react-router-dom'
 import {logout} from "../../redux/actions/userActions"
-
+import {useTypedSelector} from "../../hooks/useTypedSelector"
 import "./Header.styles.css"
 
 const Header = () => {
     const dispatch = useDispatch()
-    const currentUser = useSelector(state => state.user.currentUser)
+    const {currentUser} = useTypedSelector(state => state.user)
 
     const authLinks = (
         <ul>

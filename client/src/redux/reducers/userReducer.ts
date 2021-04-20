@@ -1,6 +1,15 @@
 import userTypes from '../types/userTypes'
+import {IUser, UserDispatchTypes} from "../actions/userActions"
 
-const initialState = {
+interface IUserState {
+    token: string | null,
+    currentUser: IUser | null,
+    isAdmin: boolean,
+    isLoggedIn: boolean,
+    error: string | null
+}
+
+const initialState: IUserState = {
     token: localStorage.getItem("token"),
     currentUser: null,
     isAdmin: false,
@@ -8,15 +17,13 @@ const initialState = {
     error: null
 }
 
-const userReducer = (state = initialState, action) => {
+const userReducer = (state: IUserState = initialState, action: UserDispatchTypes): IUserState => {
     switch(action.type){
         case userTypes.LOGIN_SUCCESS:
-            localStorage.setItem("token", action.payload.token)
-            return {...state, token: action.payload.token, currentUser: action.payload.user, isLoggedIn: true, error: null}
-        case userTypes.SET_ADMIN:
-            return {...state, isAdmin: action.payload}
+            localStorage.setItem("token", JSON.stringify(action.payload.token))
+            return {...state, token: action.payload.token, currentUser: action.payload.currentUser, isAdmin: action.payload.isAdmin, isLoggedIn: true, error: null}
         case userTypes.LOGIN_FAILURE:
-            return {...state, currentUser: null, isLoggedIn: false, error: action.payload}
+            return {...state, currentUser: null, isLoggedIn: false, error: action.payload.error}
         case userTypes.LOGOUT:
             localStorage.removeItem("token")
             return {...state, token: null, currentUser: null, isLoggedIn: false, error: null, isAdmin: false}

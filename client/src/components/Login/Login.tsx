@@ -1,10 +1,11 @@
 import React, {useState} from 'react'
-import {useDispatch, useSelector} from "react-redux"
+import {useDispatch} from "react-redux"
 import {Redirect} from "react-router-dom"
 import {loginUser} from "../../redux/actions/userActions"
 import "./Login.styles.css"
+import {useTypedSelector} from "../../hooks/useTypedSelector"
 
-const Login = () => {
+const Login: React.FC = () => {
     const [formValue, setFormValue] = useState({
         username: "",
         email: "",
@@ -12,17 +13,17 @@ const Login = () => {
     })
 
     const dispatch = useDispatch()
-    const currentUser = useSelector(state => state.user.currentUser)
+    const {currentUser} = useTypedSelector(state => state.user)
 
 
     const {username, email, password} = formValue
 
-    const onChange = (e) => {
+    const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value} = e.target
         setFormValue({...formValue, [name]: value})
     }
 
-    const onSubmit = async(e) => {
+    const onSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
         dispatch(loginUser(formValue))

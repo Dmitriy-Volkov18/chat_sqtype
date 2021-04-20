@@ -74,28 +74,28 @@ const Chat = () => {
 
     }, [])
 
-    useEffect(() => {
-        const asyncFetchMessages = async() => {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
+    // useEffect(() => {
+    //     const asyncFetchMessages = async() => {
+    //         const config = {
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         }
             
-            if(token){
-                config.headers.authorization = token
-                axios.defaults.headers.common['Authorization'] = token;
-            }else{
-                return
-            }
+    //         if(token){
+    //             config.headers.authorization = token
+    //             axios.defaults.headers.common['Authorization'] = token;
+    //         }else{
+    //             return
+    //         }
     
-            let response = await axios.get("http://localhost:5000/api/messages/getAllMessages", config)
-            const data = await response.data
-            setFetchedAllMessages(data.messages)
-        }
+    //         let response = await axios.get("http://localhost:5000/api/messages/getAllMessages", config)
+    //         const data = await response.data
+    //         setFetchedAllMessages(data.messages)
+    //     }
 
-        asyncFetchMessages()
-    }, [token])
+    //     asyncFetchMessages()
+    // }, [token])
 
     useEffect(() => {
         chat_body_ref.current.scrollTop = chat_body_ref.current.scrollHeight
@@ -259,9 +259,9 @@ const Chat = () => {
                     </div>
                 </div>
 
-                {
+                {/* {
                     isAdmin && (<AllUsers socket={socketRef.current} />)
-                }
+                } */}
             </div>
         </div>
     )
