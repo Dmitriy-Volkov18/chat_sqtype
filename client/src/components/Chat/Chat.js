@@ -203,8 +203,6 @@ const Chat = () => {
         }
     }
 
-    let assignColor = getRandomColor()
-
     return (
         <div className="chat_container">
             <h1>Welcome to the chat</h1>
