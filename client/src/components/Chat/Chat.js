@@ -21,7 +21,6 @@ const Chat = () => {
     const token = useSelector(state => state.user.token)
     const isAdmin = useSelector(state => state.user.isAdmin)
 
-    const [fetchedAllMessages, setFetchedAllMessages] = useState([])
 
     const chat_body_ref = useRef()
 
@@ -39,8 +38,6 @@ const Chat = () => {
             auth: {token}
         });
 
-        socketRef.current.emit("joinRoom", "chatRoom")
-
         socketRef.current.on("fetchOnlineUsers", (onlineUser) => {
             setOnlineUsers(onlineUser)
         })
@@ -54,7 +51,6 @@ const Chat = () => {
         // })
 
         return () => {
-            socketRef.current.emit("leaveRoom", "chatRoom")
             socketRef.current.close()
         }
     }, [token])
@@ -74,28 +70,16 @@ const Chat = () => {
 
     }, [])
 
-    // useEffect(() => {
-    //     const asyncFetchMessages = async() => {
-    //         const config = {
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         }
-            
-    //         if(token){
-    //             config.headers.authorization = token
-    //             axios.defaults.headers.common['Authorization'] = token;
-    //         }else{
-    //             return
-    //         }
-    
-    //         let response = await axios.get("http://localhost:5000/api/messages/getAllMessages", config)
-    //         const data = await response.data
-    //         setFetchedAllMessages(data.messages)
-    //     }
+    const [fetchedAllMessages, setFetchedAllMessages] = useState([])
 
-    //     asyncFetchMessages()
-    // }, [token])
+
+    useEffect(() => {
+        socketRef.current.emit("fetchAllMessages")
+
+        socketRef.current.on("fetchAllMessages", (messages) => {
+            setFetchedAllMessages(messages)
+        })
+    }, [])
 
     useEffect(() => {
         chat_body_ref.current.scrollTop = chat_body_ref.current.scrollHeight
@@ -129,53 +113,6 @@ const Chat = () => {
         return color;
     }
 
-    useEffect(() => {
-        const findUser = async () => {
-            try{
-                const config = {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-                
-                if(token){
-                    config.headers.authorization = token
-                    axios.defaults.headers.common['Authorization'] = token;
-                }else{
-                    return
-                }
-
-                const foundUser = await axios.get(`http://localhost:5000/api/users/${payload.username}`, config)
-
-                if(foundUser){
-                    const muteValue = foundUser.data.user.status.isMuted
-                    // socketRef.current.emit("muteUser", muteValue)
-                    
-                    // socketRef.current.on("muteUserUsername", (muteValueq) => {
-                        
-                    // })
-                    messageRef.current.disabled = muteValue
-                    setMuted(muteValue)
-                }
-            }catch(err){
-                console.log("Error")
-            }
-        }
-                
-        if(payload.username) findUser()
-
-    }, [payload.username, token])
-
-    useEffect(() => {
-        socketRef.current.on("banUser", (isBanned) => {
-            isBannedRef.current = isBanned
-            console.log(isBannedRef.current)
-            // if(isBannedRef.current){
-            //     dispatch(logout())
-            // }
-        })
-    }, [])
-
     const emitMessage = () => {
         socketRef.current.emit("chatRoomMessage", {
             chatRoom: "chatRoom",
@@ -186,17 +123,17 @@ const Chat = () => {
     }
 
     const handleSendMessage = () => {
-        if(!messageRef || !messageRef.current || !messageRef?.current?.value) {
+        if(!messageRef?.current?.value) {
             return;
         }
 
         if(lastMessage?.current?.date){
-            if(new Date(lastMessage.current.date).getTime() > new Date(lastMessage.current.date).getTime() + 15000){
+            if(new Date(lastMessage.current.date).getTime() > new Date(lastMessage.current.date).getTime() + 3000){
                 emitMessage()
             }else{
                 setTimeout(() => {
                     emitMessage()
-                }, 15000)
+                }, 3000)
             }
         }else{
             emitMessage()
@@ -224,14 +161,21 @@ const Chat = () => {
 
                     <div className="chat-body-block" ref={chat_body_ref}>
                         {
-                            fetchedAllMessages.map((message, index) => (
-                                    <Message key={index} message={message}
-                                        specificClass={userId.id === message.userCreated ? "currentUser" : "anotherUser"}
-                                        currentUser={userId.id === message.userCreated ? true : false}
-                                        color1={{color:getRandomColor()}}
-                                    />
-                                )
-                            ) 
+                            fetchedAllMessages.length > 0 &&
+                            fetchedAllMessages.map((message, index) => {
+                                {/* console.log(message) */}
+                                return <Message
+                                    key={index} message={message}
+                                    specificClass={userId.id === message.userCreated ? "currentUser" : "anotherUser"}
+                                    currentUser={userId.id === message.userCreated ? true : false}
+                                    color1={{color:getRandomColor()}}
+                                />
+                            }
+
+
+                                    
+                                
+                             )
                         }
                         {
                             messages.map((message, index) => 
@@ -257,9 +201,9 @@ const Chat = () => {
                     </div>
                 </div>
 
-                {/* {
-                    isAdmin && (<AllUsers socket={socketRef.current} />)
-                } */}
+                {
+                    isAdmin && (<AllUsers socket={socketRef} />)
+                }
             </div>
         </div>
     )

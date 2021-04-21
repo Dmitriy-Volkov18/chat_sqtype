@@ -1,22 +1,11 @@
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-const User = require("../Models/User")
-const Message = require("../Models/Message")
+const db = require("../mysqlConnection")
 
 exports.getAllUsers = async (req, res, next) => {
     try{
-        const users = await User.find()
-
-        if(!users){
-            return res.status(404).json({
-                message: "No users found"
-            })
-        }
-
-        res.status(200).json({
-            users
-        })
+        
     }catch(err){
         res.status(500).json({
             error: "Server error"
@@ -27,19 +16,7 @@ exports.getAllUsers = async (req, res, next) => {
 
 exports.getUserByUsername = async (req, res, next) => {
     try{
-        const user = await User.findOne({
-            username: req.params.username
-        })
-
-        if(!user){
-            return res.status(404).json({
-                message: "User not found"
-            })
-        }
-
-        res.status(200).json({
-            user
-        })
+        
     }catch(err){
         res.status(500).json({
             error: "Server error"
@@ -49,19 +26,7 @@ exports.getUserByUsername = async (req, res, next) => {
 
 exports.getBannedUser = async (req, res, next) => {
     try{
-        const user = await User.findOne({
-            username: req.params.username
-        })
-
-        if(!user){
-            return res.status(404).json({
-                message: "User not found"
-            })
-        }
-
-        res.status(200).json({
-            banned: user.status.isBanned
-        })
+        
     }catch(err){
         res.status(500).json({
             error: "Server error"
@@ -71,7 +36,7 @@ exports.getBannedUser = async (req, res, next) => {
 
 const createToken = (user) => {
     const token = jwt.sign({
-        id: user._id,
+        id: user.id,
         username: user.username,
         email: user.email,
     }, process.env.TOKENKEY, {expiresIn: "1h"})
@@ -79,42 +44,38 @@ const createToken = (user) => {
     return token
 }
 
+
 const register = async (res, username, email, password, isAdmin) => {
     try{
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const user = new User({
-            username,
-            email,
-            hashedPassword,
-            isAdmin
+        db.query('INSERT INTO users (username, email, password, isAdmin) VALUES (?, ?, ?, ?)', [username, email, hashedPassword, isAdmin], function(error){
+            if(error) throw error
         })
 
-        const savedUser = await user.save()
+        db.query("SELECT * FROM users WHERE username = ? AND email = ?", [username, email], function (error, result){
+            if(error) throw error
 
-        if(!savedUser){
-            return res.status(500).json({
-                error: "Cannot save user"
+            const token = createToken(result[0])
+
+            const newUser = {
+                id: result[0].id,
+                username: result[0].username,
+                email: result[0].email
+            }
+            
+            // db.end();
+
+            return res.status(201).json({
+                token: token,
+                user: newUser,
+                isAdmin: isAdmin,
+                isBanned: 0
             })
-        }
-
-        const token = createToken(savedUser)
-
-        const newUser = {
-            id: savedUser._id,
-            username: savedUser.username,
-            email: savedUser.email
-        }
-
-        return res.status(201).json({
-            token: token,
-            user: newUser,
-            isAdmin: savedUser.isAdmin,
-            isBanned: savedUser.status.isBanned
         })
     }catch(err){
         res.status(500).json({
-            error: err
+            error: "Something went wrong"
         })
     }
 }
@@ -124,7 +85,6 @@ exports.signup = async (req, res, next) => {
         let isAdmin
         const {username, email, password} = req.body
         let errors = []
-
 
         if(!username || !email || !password){
             errors.push({msg: "Please enter all required fields"})
@@ -154,49 +114,62 @@ exports.signup = async (req, res, next) => {
             })
         }
 
-        const usersCount = await User.countDocuments({})
+        db.query('SELECT COUNT(*) as count FROM users', async function (error, results, fields) {
+            if (error) throw error;
+            
+            const usersCount = results[0].count
 
-        if(usersCount <= 0){
-            isAdmin = true
-            register(res, username, email, password, isAdmin)
-        }else{
-            const existingUser = await User.findOne({
-                username: username,
-                email: email
-            }).select("+hashedPassword")
-
-            if(!existingUser){
-                isAdmin = false
+            if(usersCount <= 0){
+                isAdmin = 1
                 register(res, username, email, password, isAdmin)
             }else{
-                const match = await checkPasswords2(password, existingUser.hashedPassword)
+                db.query("SELECT * FROM users WHERE username = ? AND email = ?", [username, email], async function(error, result){
+                    try{
+                        if(error) throw error
+                    
+                        if(result.length === 0){
+                            isAdmin = 0
+                            register(res, username, email, password, isAdmin)
+                        }else{
+                            const match = await checkPasswords2(password, result[0].password)
+        
+                            if(!match){
+                                errors.push({msg: "Incorrect password"})
+                            }
+        
+                            if(errors.length > 0){
+                                return res.status(400).json({
+                                    errors
+                                })
+                            }
+        
+                            const token = createToken(result[0])
+        
+                            const user = {
+                                id: result[0].id,
+                                username: result[0].username,
+                                email: result[0].email
+                            }
 
-                if(!match){
-                    errors.push({msg: "Incorrect password"})
-                }
-
-                if(errors.length > 0){
-                    return res.status(400).json({
-                        errors
-                    })
-                }
-
-                const token = createToken(existingUser)
-
-                const user = {
-                    id: existingUser._id,
-                    username: existingUser.username,
-                    email: existingUser.email
-                }
-
-                return res.status(201).json({
-                    token: token,
-                    user: user,
-                    isAdmin: existingUser.isAdmin,
-                    isBanned: existingUser.status.isBanned
+                            // db.end();
+        
+                            return res.status(201).json({
+                                token: token,
+                                user: user,
+                                isAdmin: result[0].isAdmin,
+                                isBanned: result[0].isBanned
+                            })
+                        }
+                    }catch(err){
+                        res.status(500).json({
+                            error: err
+                        })
+                    }
                 })
             }
-        }
+        });
+
+        
     }catch(err){
         res.status(500).json({
             error: err
@@ -216,22 +189,7 @@ function checkPasswords2(password, hashedPassword){
 
 exports.createMessage = async (req, res, next) => {
     try{
-        const message = new Message({
-            message: req.body.message,
-            userCreated: req.currentUser.id
-        })
-    
-        const newMessage = await message.save()
-    
-        if(!newMessage){
-            return res.status(400).json({
-                error: "Cannot save message"
-            })
-        }
-    
-        res.status(201).json({
-            message: newMessage
-        })
+        
     }catch(err){
         res.status(500).json({
             error: err
@@ -242,11 +200,7 @@ exports.createMessage = async (req, res, next) => {
 
 exports.deleteAllUsers = async (req, res, next) => {
     try{
-        await User.deleteMany({})
-
-        res.status(200).json({
-            message: "All users has been deleted"
-        })
+        
     }catch(err){
         res.status(500).json("Server error")
     }

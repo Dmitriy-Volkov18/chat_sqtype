@@ -2,11 +2,11 @@ import React from 'react'
 import "./Message.styles.css"
 import moment from "moment"
 
-const Message = (message: {message: string, date: Date, username: string, userId: string}, specificClass: string, color1: {color:string}, currentUser: boolean) => {
+const Message = ({message, specificClass, color1, currentUser}) => {
     if(message instanceof Object){
         return (
             <div className={`${specificClass}`}>
-                <p className="msgUsername">{currentUser ? "You" : message.username} - <span className="date">{moment(message.date).fromNow()}</span></p>
+                <p className="msgUsername">{currentUser ? "You" : message.username} - </p>
                 <p className="msgText" style={color1}>{message.message}</p>
             </div>
         )
@@ -19,5 +19,5 @@ const Message = (message: {message: string, date: Date, username: string, userId
     }
     
 }
-
+{/* <span className="date">{moment(message.date).fromNow()}</span> */}
 export default Message

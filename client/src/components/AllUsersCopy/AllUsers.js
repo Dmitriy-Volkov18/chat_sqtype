@@ -11,13 +11,14 @@ import React, {useState, useEffect} from 'react'
 //     emit(event: string, data: any): void;
 // }
 
-// const AllUsers = ({socket: Socket}) => {
-//     const [fetchAllUsers, setFetchAllUsers] = React.useState<IUsers[]>([])
+
+// const AllUsers = (socket) => {
+//     const [fetchAllUsers, setFetchAllUsers] = useState([])
 
 //     useEffect(() => {
-//         socket.emit("fetchAllUsers")
+//         socket.current.emit("fetchAllUsers")
     
-//         socket.on("fetchAllUsers", (users: IUsers[]) => {
+//         socket.current.on("fetchAllUsers", (users) => {
 //             if(users.length > 0){
 //                 setFetchAllUsers(users)
 //             }
@@ -25,22 +26,22 @@ import React, {useState, useEffect} from 'react'
         
 //     }, [fetchAllUsers])
 
-//     const banUser = (username: string) => {
+//     const banUser = (username) => {
 //         console.log("banned")
-//         socket.emit("banUser", username)
+//         socket.current.emit("banUser", username)
 //     }
 
-//     const unbanUser = (username: string) => {
+//     const unbanUser = (username) => {
 //         console.log("unbanned")
-//         socket.emit("unBanUser", username)
+//         socket.current.emit("unBanUser", username)
 //     }
 
-//     const muteUser = (username: string) => {
-//         socket.emit("muteUserUsername", username)
+//     const muteUser = (username) => {
+//         socket.current.emit("muteUserUsername", username)
 //     }
 
-//     const unmuteUser = (username: string) => {
-//         socket.emit("unMuteUserUsername", username)
+//     const unmuteUser = (username) => {
+//         socket.current.emit("unMuteUserUsername", username)
 //     }
 
 //     return (
@@ -60,6 +61,7 @@ import React, {useState, useEffect} from 'react'
 // }
 
 // export default AllUsers
+
 
 
 
