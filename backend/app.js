@@ -63,20 +63,128 @@ io.on("connection", socket => {
     socket.on("chatRoomMessage", ({chatRoom, message}) => {
         db.query('INSERT INTO messages (message, userCreated, username) VALUES (?, ?, ?)', [message, socket.currUser.id, socket.currUser.username], (error, result) => {
             if(error) throw error
-        })
 
-        io.emit("newMessage", {
-            message,
-            username: socket.currUser.username,
-            userId: socket.currUser.id
+            db.query("SELECT date FROM messages WHERE id = ?", [result.insertId], (error, result) => {
+                if(error) throw error
+                
+                io.emit("newMessage", {
+                    message,
+                    date: result[0].date,
+                    username: socket.currUser.username,
+                    userId: socket.currUser.id
+                })
+            })
         })
     })
 
     socket.on("fetchAllMessages", () => {
-        db.query("SELECT message, userCreated, username FROM messages", (error, result) => {
+        db.query("SELECT message, date, userCreated, username FROM messages", (error, result) => {
             if(error) throw error
 
             io.emit("fetchAllMessages", result)
+        })
+    })
+
+    socket.on("fetchAllUsers", async () => {
+        db.query("SELECT username FROM users", (error, result) => {
+            if(error) throw error
+            
+            io.emit("fetchAllUsers", result)
+        })
+    })
+
+    socket.on("banUser", async (username) => {
+        const clients = await io.fetchSockets();
+
+        for(let client of clients){
+            if(client.currUser.username !== username || !onlineSet.has(username)){
+                console.log("Not that user");
+                continue
+            }
+
+            Object.values([...onlineSet]).forEach(async onlineUser => {
+                db.query("SELECT username FROM users WHERE username = ?", [onlineUser], (error, result) => {
+                    if(error) throw error
+                    
+                    if(result == 0){
+                        return
+                    }
+
+                    db.query("UPDATE users SET isBanned = 1 WHERE username = ?", [username], (error, result) => {
+                        if(error) throw error
+
+                        onlineSet.delete(client.currUser.username)
+                        client.disconnect(true)
+                        io.emit("fetchOnlineUsers", [...onlineSet]);
+                    })
+                })
+            })
+        }
+    })
+
+    socket.on("unBanUser", async (username) => {
+        db.query("SELECT username FROM users WHERE username = ?", [username], (error, result) => {
+            if(error) throw error
+
+            if(result == 0){
+                return
+            }
+
+            db.query("UPDATE users SET isBanned = 0 WHERE username = ?", [username], (error, result) => {
+                if(error) throw error
+            })
+        })
+    })
+
+    socket.on("muteUserUsername", async (username) => {
+        if(!onlineSet.has(username)){
+            return;
+        }
+
+        Object.values([...onlineSet]).forEach(async onlineUser => {
+            if(onlineUser === username){
+                db.query("UPDATE users SET isMuted = 1 WHERE username = ?", [username], (error, result) => {
+                    if(error) throw error
+                })
+            }
+        })
+
+        db.query("SELECT isMuted FROM users WHERE username = ?", [username], (error, result) => {
+            if(error) throw error
+
+            if(result == 0){
+                return
+            }
+
+            io.emit("muteUserUsername", result[0].isMuted)
+            console.log(result[0].isMuted)
+        })
+
+
+    })
+
+    socket.on("unMuteUserUsername", async (username) => {
+        if(!onlineSet.has(username)){
+            return;
+        }
+
+        Object.values([...onlineSet]).forEach(async onlineUser => {
+            if(onlineUser === username){
+                db.query("UPDATE users SET isMuted = 0 WHERE username = ?", [username], (error, result) => {
+                    if(error) throw error
+                })
+            }
+        })
+
+        db.query("SELECT isMuted FROM users WHERE username = ?", [username], (error, result) => {
+            if(error) throw error
+
+            if(result == 0){
+                return
+            }
+
+            io.emit("muteUserUsername", result[0].isMuted)
+            console.log(result[0].isMuted)
         })
     })
 

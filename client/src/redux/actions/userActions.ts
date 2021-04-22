@@ -98,33 +98,39 @@ export const loginUser = (userData: {username: string, email: string, password: 
     }
 }
 
-export const getUser = (): ThunkAction<void, RootReducer, unknown, AnyAction> => async(dispatch: Dispatch, getState) => {
-    try{
-        dispatch({type: userTypes.LOGIN_START})
+// export const getUser = (): ThunkAction<void, RootReducer, unknown, AnyAction> => async(dispatch: Dispatch, getState) => {
+//     try{
+//         dispatch({type: userTypes.LOGIN_START})
 
-        const token = getState().user.token
+//         const token = getState().user.token
+//         console.log(token)
 
         
-        const config = {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }
+//         const config = {
+//             headers: {
+//                 'Content-Type': 'application/json'
+//             }
+//         }
         
-        if(token){
-            // config.headers.authorization = token
-            axios.defaults.headers.common['Authorization'] = token;
-        }else{
-            return
-        }
+//         // if(token){
+//         //     // config.headers.authorization = token
+//         //     axios.defaults.headers.common['Authorization'] = token;
+//         // }else{
+//         //     return
+//         // }
 
-        let response = await axios.get("http://localhost:5000/api/auth/user", config)
-        const data = await response.data
-        const currentUser = data.user
-        const isAdmin = data.isAdmin
-        dispatch({type: userTypes.LOGIN_SUCCESS, payload: {token, currentUser, isAdmin}})
-    }catch(err){
-        const errors = err.response.data.errors
-        dispatch({type: userTypes.LOGIN_FAILURE, payload: errors})
-    }
-}
+//         let response = await axios.get("http://localhost:5000/api/auth/user", {
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 "Authorization": "Bearer" + token
+//             }
+//         })
+//         const data = await response.data
+//         const currentUser = data.user
+//         const isAdmin = data.isAdmin
+//         dispatch({type: userTypes.LOGIN_SUCCESS, payload: {token, currentUser, isAdmin}})
+//     }catch(err){
+//         const errors = err.response.data.errors
+//         dispatch({type: userTypes.LOGIN_FAILURE, payload: errors})
+//     }
+// }

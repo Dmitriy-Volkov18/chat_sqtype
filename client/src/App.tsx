@@ -6,33 +6,41 @@ import Login from "./components/Login/Login"
 import Chat from "./components/Chat/Chat"
 // import {getUser} from "./redux/actions/userActions"
 import PrivateRoute from './components/PrivateRoute/PrivateRoute'
-import {connect} from 'react-redux'
-
+import {useDispatch} from "react-redux"
+import SocketContext from "./socketContext/socketContext"
 import ErrorAlert from "./components/ErrorAlert/ErrorAlert"
-// {getUser}
-function App() {
-  useEffect(() => {
-      // getUser()
-  })
-  // , [getUser]
-  return (
-    <div className="App">
-      <Router>
-        <Header />
-        <ErrorAlert />
-        <Switch>
-          <PrivateRoute exact path="/" component={Chat} />
-          <Route exact path="/login" component={Login} />
-        </Switch>
-      </Router>
+import io from "socket.io-client";
 
-    </div>
+
+
+function App() {
+  const socket = io("http://localhost:5000", {
+    auth: {token: localStorage.getItem("token")}
+  });
+
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+      // dispatch(getUser())
+  }, [dispatch])
+  // , [getUser]
+
+
+  return (
+    <SocketContext.Provider value={socket}>
+      <div className="App">
+        <Router>
+          <Header />
+          <ErrorAlert />
+          <Switch>
+            <PrivateRoute exact path="/" component={Chat} />
+            <Route exact path="/login" component={Login} />
+          </Switch>
+        </Router>
+      </div>
+    </SocketContext.Provider>
   );
 }
 
-// const mapDispatchToProps = dispatch => ({
-//   getUser: () => dispatch(getUser())
-// })
-
-// export default connect(null, mapDispatchToProps)(App);
 export default App;
+

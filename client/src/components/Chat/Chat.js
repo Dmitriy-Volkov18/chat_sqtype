@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useContext} from 'react';
 import { io } from "socket.io-client";
 import Message from '../Message/Message';
 import AllUsers from '../AllUsersCopy/AllUsers';
@@ -7,7 +7,7 @@ import {useSelector} from "react-redux"
 import axios from "axios"
 import {useDispatch} from "react-redux"
 import {logout} from "../../redux/actions/userActions"
-
+import SocketContext from "../../socketContext/socketContext"
 
 const Chat = () => {
     const socketRef = useRef();
@@ -21,13 +21,16 @@ const Chat = () => {
     const token = useSelector(state => state.user.token)
     const isAdmin = useSelector(state => state.user.isAdmin)
 
-
+    // const socket = useContext(SocketContext)
     const chat_body_ref = useRef()
 
-    const isBannedRef = useRef()
     const dispatch = useDispatch()
 
+    
     const lastMessage = useRef()
+
+
+    
 
     useEffect(() => {
         if(token){
@@ -92,17 +95,17 @@ const Chat = () => {
         // dispatch(logout());
     // }
 
-    // useEffect(() => {
-    //     socketRef.current.on("muteUserUsername", (muteValueq) => {
-    //         messageRef.current.disabled = muteValueq
-    //         setMuted(muteValueq)
-    //     })
+    useEffect(() => {
+        socketRef.current.on("muteUserUsername", (muteValueq) => {
+            messageRef.current.disabled = muteValueq
+            setMuted(muteValueq)
+        })
 
-    //     socketRef.current.on("unMuteUserUsername", (muteValueq) => {
-    //         messageRef.current.disabled = muteValueq
-    //         setMuted(muteValueq)
-    //     })
-    // })
+        // socketRef.current.on("unMuteUserUsername", (muteValueq) => {
+        //     messageRef.current.disabled = muteValueq
+        //     setMuted(muteValueq)
+        // })
+    })
 
     function getRandomColor() {
         var letters = '0123456789ABCDEF';
@@ -140,6 +143,36 @@ const Chat = () => {
         }
     }
 
+    const [fetchAllUsers, setFetchAllUsers] = useState([])
+
+    
+    useEffect(() => {
+        socketRef.current.emit("fetchAllUsers")
+    
+        socketRef.current.on("fetchAllUsers", (users) => {
+            if(users.length > 0){
+                setFetchAllUsers(users)
+            }
+        })
+        
+    }, [])
+
+    const banUser = (username) => {
+        socketRef.current.emit("banUser", username)
+    }
+
+    const unbanUser = (username) => {
+        socketRef.current.emit("unBanUser", username)
+    }
+
+    const muteUser = (username) => {
+        socketRef.current.emit("muteUserUsername", username)
+    }
+
+    const unmuteUser = (username) => {
+        socketRef.current.emit("unMuteUserUsername", username)
+    }
+
     return (
         <div className="chat_container">
             <h1>Welcome to the chat</h1>
@@ -162,20 +195,14 @@ const Chat = () => {
                     <div className="chat-body-block" ref={chat_body_ref}>
                         {
                             fetchedAllMessages.length > 0 &&
-                            fetchedAllMessages.map((message, index) => {
-                                {/* console.log(message) */}
-                                return <Message
+                            fetchedAllMessages.map((message, index) => (
+                                <Message
                                     key={index} message={message}
                                     specificClass={userId.id === message.userCreated ? "currentUser" : "anotherUser"}
                                     currentUser={userId.id === message.userCreated ? true : false}
                                     color1={{color:getRandomColor()}}
                                 />
-                            }
-
-
-                                    
-                                
-                             )
+                            ))
                         }
                         {
                             messages.map((message, index) => 
@@ -184,14 +211,13 @@ const Chat = () => {
                         }
                         {
                             newMessages.map((message, index) => ( 
-                                    <Message
-                                        key={index} message={message}
-                                        specificClass={userId.id === message.userId ? "currentUser" : "anotherUser"}
-                                        currentUser={userId.id === message.userId ? true : false}
-                                        color1={{color:getRandomColor()}}
-                                    />
-                                )
-                            ) 
+                                <Message
+                                    key={index} message={message}
+                                    specificClass={userId.id === message.userId ? "currentUser" : "anotherUser"}
+                                    currentUser={userId.id === message.userId ? true : false}
+                                    color1={{color:getRandomColor()}}
+                                />
+                            )) 
                         }
                     </div>
 
@@ -201,9 +227,23 @@ const Chat = () => {
                     </div>
                 </div>
 
-                {
-                    isAdmin && (<AllUsers socket={socketRef} />)
-                }
+                {/* {
+                    isAdmin && (<AllUsers socket={socketRef.current} />)
+                } */}
+
+                {isAdmin && 
+                (<div className="allUsers-container">
+                    <h2>All users</h2>
+                    <ul>
+                        {
+                            fetchAllUsers ? (
+                                fetchAllUsers.map((user, index) => (
+                                    <li key={index}><span><button className="banBtn" onClick={() => banUser(user.username)}>Ban</button><button className="unbanBtn" onClick={() => unbanUser(user.username)}>Unban</button><button className="muteBtn" onClick={() => muteUser(user.username)}>Mute</button><button className="unmuteBtn" onClick={() => unmuteUser(user.username)}>Unmute</button></span>{user.username}</li>
+                                ))
+                            ) : <h3>No users found</h3>
+                        }
+                    </ul>
+                </div>)}
             </div>
         </div>
     )
