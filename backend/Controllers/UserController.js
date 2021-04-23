@@ -3,37 +3,6 @@ const bcrypt = require("bcrypt")
 
 const db = require("../mysqlConnection")
 
-exports.getAllUsers = async (req, res, next) => {
-    try{
-        
-    }catch(err){
-        res.status(500).json({
-            error: "Server error"
-        })
-    }
-}
-
-
-exports.getUserByUsername = async (req, res, next) => {
-    try{
-        
-    }catch(err){
-        res.status(500).json({
-            error: "Server error"
-        })
-    }
-}
-
-exports.getBannedUser = async (req, res, next) => {
-    try{
-        
-    }catch(err){
-        res.status(500).json({
-            error: "Server error"
-        })
-    }
-}
-
 const createToken = (user) => {
     const token = jwt.sign({
         id: user.id,
@@ -43,7 +12,6 @@ const createToken = (user) => {
 
     return token
 }
-
 
 const register = async (res, username, email, password, isAdmin) => {
     try{
@@ -66,10 +34,12 @@ const register = async (res, username, email, password, isAdmin) => {
             
             // db.end();
 
+            const admin = isAdmin == 1 ? true : false
+
             return res.status(201).json({
                 token: token,
                 user: newUser,
-                isAdmin: isAdmin,
+                isAdmin: admin,
                 isBanned: 0
             })
         })
@@ -152,11 +122,13 @@ exports.signup = async (req, res, next) => {
                             }
 
                             // db.end();
+
+                            const admin = result[0].isAdmin == 1 ? true : false
         
                             return res.status(201).json({
                                 token: token,
                                 user: user,
-                                isAdmin: result[0].isAdmin,
+                                isAdmin: admin,
                                 isBanned: result[0].isBanned
                             })
                         }
@@ -185,23 +157,4 @@ function checkPasswords2(password, hashedPassword){
             resolve(res)
         })
     })
-}
-
-exports.createMessage = async (req, res, next) => {
-    try{
-        
-    }catch(err){
-        res.status(500).json({
-            error: err
-        })
-    }
-}
-
-
-exports.deleteAllUsers = async (req, res, next) => {
-    try{
-        
-    }catch(err){
-        res.status(500).json("Server error")
-    }
 }

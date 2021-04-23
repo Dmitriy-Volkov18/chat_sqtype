@@ -8,7 +8,6 @@ const checkAth = async (req, res, next) => {
             return res.status(401).json({
                 error: "You are not authorized"
             })
-            // return next()
         }
 
         const decodedUser = await jwt.verify(token, process.env.TOKENKEY)
@@ -17,7 +16,7 @@ const checkAth = async (req, res, next) => {
         next()
     }catch(err){
         res.status(401).json({
-            error: "Token is not valid"
+            error: "Invalid token"
         })
     }
 }

@@ -1,14 +1,13 @@
 const express = require("express")
 const app = express()
+
+require("dotenv").config()
+
 const db = require("./mysqlConnection")
-const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 
 const userRoute = require("./Routes/UserRoute")
-const messageRoute = require("./Routes/MessageRoute")
 const authRoute = require("./Routes/AuthRoute")
-
-require("dotenv").config()
 
 app.use(express.json())
 
@@ -21,9 +20,7 @@ app.use((req, res, next) => {
 })
 
 app.use("/api/users", userRoute)
-app.use("/api/messages", messageRoute)
 app.use("/api/auth", authRoute)
-
 
 const httpServer = require("http").createServer(app);
 const options = { 
@@ -85,10 +82,10 @@ io.on("connection", socket => {
         })
     })
 
-    socket.on("fetchAllUsers", async () => {
+    socket.on("fetchAllUsers", () => {
         db.query("SELECT username FROM users", (error, result) => {
             if(error) throw error
-            
+
             io.emit("fetchAllUsers", result)
         })
     })
@@ -98,11 +95,10 @@ io.on("connection", socket => {
 
         for(let client of clients){
             if(client.currUser.username !== username || !onlineSet.has(username)){
-                console.log("Not that user");
                 continue
             }
 
-            Object.values([...onlineSet]).forEach(async onlineUser => {
+            Object.values([...onlineSet]).forEach(onlineUser => {
                 db.query("SELECT username FROM users WHERE username = ?", [onlineUser], (error, result) => {
                     if(error) throw error
                     
@@ -122,7 +118,7 @@ io.on("connection", socket => {
         }
     })
 
-    socket.on("unBanUser", async (username) => {
+    socket.on("unBanUser", (username) => {
         db.query("SELECT username FROM users WHERE username = ?", [username], (error, result) => {
             if(error) throw error
 
@@ -137,55 +133,71 @@ io.on("connection", socket => {
     })
 
     socket.on("muteUserUsername", async (username) => {
-        if(!onlineSet.has(username)){
-            return;
-        }
+        const clients = await io.fetchSockets();
 
-        Object.values([...onlineSet]).forEach(async onlineUser => {
-            if(onlineUser === username){
-                db.query("UPDATE users SET isMuted = 1 WHERE username = ?", [username], (error, result) => {
-                    if(error) throw error
-                })
+        for(let client of clients){
+            if(client.currUser.username !== username || !onlineSet.has(username)){
+                continue
             }
-        })
 
-        db.query("SELECT isMuted FROM users WHERE username = ?", [username], (error, result) => {
+            Object.values([...onlineSet]).forEach(onlineUser => {
+                if(onlineUser === username){
+                    db.query("UPDATE users SET isMuted = 1 WHERE username = ?", [username], (error, result) => {
+                        if(error) throw error
+                    })
+                }
+            })
+
+            db.query("SELECT isMuted FROM users WHERE username = ?", [username], (error, result) => {
+                if(error) throw error
+    
+                if(result == 0){
+                    return
+                }
+    
+                io.to(client.id).emit("muteUserUsername", result[0].isMuted)
+            })
+        }
+    })
+
+    socket.emit("isMuted", () => {
+        db.query("SELECT isMuted FROM users WHERE username = ?", [socket.currUser.username], (error, result) => {
             if(error) throw error
 
             if(result == 0){
                 return
             }
 
-            io.emit("muteUserUsername", result[0].isMuted)
-            console.log(result[0].isMuted)
+            socket.emit("isMuted", result[0].isMuted)
         })
-
-
     })
 
     socket.on("unMuteUserUsername", async (username) => {
-        if(!onlineSet.has(username)){
-            return;
+        const clients = await io.fetchSockets();
+
+        for(let client of clients){
+            if(client.currUser.username !== username || !onlineSet.has(username)){
+                continue
+            }
+
+            Object.values([...onlineSet]).forEach(onlineUser => {
+                if(onlineUser === username){
+                    db.query("UPDATE users SET isMuted = 0 WHERE username = ?", [username], (error, result) => {
+                        if(error) throw error
+                    })
+                }
+            })
+
+            db.query("SELECT isMuted FROM users WHERE username = ?", [username], (error, result) => {
+                if(error) throw error
+    
+                if(result == 0){
+                    return
+                }
+    
+                io.to(client.id).emit("muteUserUsername", result[0].isMuted)
+            })
         }
-
-        Object.values([...onlineSet]).forEach(async onlineUser => {
-            if(onlineUser === username){
-                db.query("UPDATE users SET isMuted = 0 WHERE username = ?", [username], (error, result) => {
-                    if(error) throw error
-                })
-            }
-        })
-
-        db.query("SELECT isMuted FROM users WHERE username = ?", [username], (error, result) => {
-            if(error) throw error
-
-            if(result == 0){
-                return
-            }
-
-            io.emit("muteUserUsername", result[0].isMuted)
-            console.log(result[0].isMuted)
-        })
     })
 
     socket.on("disconnect", () => {

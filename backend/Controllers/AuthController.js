@@ -2,13 +2,20 @@ const db = require("../mysqlConnection")
 
 exports.getUser = async (req, res, next) => {
     try{
-        db.query("SELECT * FROM users WHERE id = ?", [req.currUser.id], function(error, result){
+        db.query("SELECT * FROM users WHERE id = ?", [req.currentUser.id], function(error, result){
             if(error) throw error
 
-            console.log(result)
+            const user = {
+                id: result[0].id,
+                username: result[0].username,
+                email: result[0].email
+            }
 
-            res.status(400).json({
-                message: result
+            const admin = result[0].isAdmin == 1 ? true : false
+
+            res.status(200).json({
+                user: user,
+                isAdmin: admin
             })
         })
     }catch(err){
