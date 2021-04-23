@@ -1,36 +1,32 @@
-import React, {useState, useEffect, useRef, useContext} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { io } from "socket.io-client";
+
 import Message from '../Message/Message';
-import AllUsers from '../AllUsersCopy/AllUsers';
+
+// import AllUsers from '../AllUsersCopy/AllUsers';
 import "./Chat.styles.css"
-import {useSelector} from "react-redux"
-import axios from "axios"
-import {useDispatch} from "react-redux"
+import {useSelector, useDispatch} from "react-redux"
 import {logout} from "../../redux/actions/userActions"
-import SocketContext from "../../socketContext/socketContext"
+// import SocketContext from "../../socketContext/socketContext"
 
 const Chat = () => {
     const socketRef = useRef();
+    const chat_body_ref = useRef()
+    const messageRef = useRef()
+    const lastMessage = useRef()
+
+    const [fetchedAllMessages, setFetchedAllMessages] = useState([])
+    const [newMessages, setNewMessages] = useState([])
     const [messages, setMessages] = useState([])
     const [onlineUsers, setOnlineUsers] = useState([])
-    const [newMessages, setNewMessages] = useState([])
     const [userId, setUserId] = useState("")
-
-    const messageRef = useRef()
 
     const token = useSelector(state => state.user.token)
     const isAdmin = useSelector(state => state.user.isAdmin)
 
-    // const socket = useContext(SocketContext)
-    const chat_body_ref = useRef()
-
     const dispatch = useDispatch()
 
-    
-    const lastMessage = useRef()
-
-
-    
+    // const socket = useContext(SocketContext)
 
     useEffect(() => {
         if(token){
@@ -56,25 +52,20 @@ const Chat = () => {
         return () => {
             socketRef.current.close()
         }
-    }, [token])
+    }, [token, dispatch])
 
     useEffect(() => {
         socketRef.current.on("newMessage", (message) => {
             setNewMessages([...newMessages, message])
             lastMessage.current = message
         })
-
     }, [newMessages, token])
 
     useEffect(() => {
         socketRef.current.on("message", (msg) => {
             setMessages(m => [...m, msg])
         });
-
     }, [])
-
-    const [fetchedAllMessages, setFetchedAllMessages] = useState([])
-
 
     useEffect(() => {
         socketRef.current.emit("fetchAllMessages")
@@ -88,31 +79,32 @@ const Chat = () => {
         chat_body_ref.current.scrollTop = chat_body_ref.current.scrollHeight
     })
 
-    // try{
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const [mute, setMuted] = useState(false);
-    // } catch (e){
-        // dispatch(logout());
-    // }
+    const [mute, setMuted] = useState(false);
 
     useEffect(() => {
         socketRef.current.on("muteUserUsername", (muteValueq) => {
-            messageRef.current.disabled = muteValueq
             setMuted(muteValueq)
         })
 
-        // socketRef.current.on("unMuteUserUsername", (muteValueq) => {
-        //     messageRef.current.disabled = muteValueq
-        //     setMuted(muteValueq)
-        // })
+        socketRef.current.on("unMuteUserUsername", (muteValueq) => {
+            setMuted(muteValueq)
+        })
+    })
+
+    useEffect(() => {
+        socketRef.current.on("isMuted", (muteValueq) => {
+            setMuted(muteValueq)
+        })
     })
 
     function getRandomColor() {
-        var letters = '0123456789ABCDEF';
-        var color = '#';
-        for (var i = 0; i < 6; i++) {
+        let letters = '0123456789ABCDEF';
+        let color = '#';
+
+        for (let i = 0; i < 6; i++) {
           color += letters[Math.floor(Math.random() * 16)];
         }
+
         return color;
     }
 
@@ -144,18 +136,25 @@ const Chat = () => {
     }
 
     const [fetchAllUsers, setFetchAllUsers] = useState([])
-
     
     useEffect(() => {
         socketRef.current.emit("fetchAllUsers")
     
         socketRef.current.on("fetchAllUsers", (users) => {
             if(users.length > 0){
-                setFetchAllUsers(users)
+                // const found = users.every(r=> fetchAllUsers.includes(r))
+                // console.log(found)
+                // if(found){
+                    setFetchAllUsers(users)
+                // }
+
             }
+
+            // setFetchAllUsers(users)
         })
-        
     }, [])
+
+
 
     const banUser = (username) => {
         socketRef.current.emit("banUser", username)
@@ -222,7 +221,7 @@ const Chat = () => {
                     </div>
 
                     <div className="form-block">
-                        <textarea name="userMessage" ref={messageRef} placeholder={`${mute ? "You`ve been muted" : "Type a message 1 to 200 characters, 1 msg in 15 secs"}`}/>
+                        <textarea name="userMessage" ref={messageRef} placeholder={`${mute ? "You`ve been muted" : "Type a message 1 to 200 characters, 1 msg in 15 secs"}`} disabled={mute} />
                         <button onClick={handleSendMessage}>Send</button> 
                     </div>
                 </div>
@@ -231,19 +230,21 @@ const Chat = () => {
                     isAdmin && (<AllUsers socket={socketRef.current} />)
                 } */}
 
-                {isAdmin && 
-                (<div className="allUsers-container">
-                    <h2>All users</h2>
-                    <ul>
-                        {
-                            fetchAllUsers ? (
-                                fetchAllUsers.map((user, index) => (
-                                    <li key={index}><span><button className="banBtn" onClick={() => banUser(user.username)}>Ban</button><button className="unbanBtn" onClick={() => unbanUser(user.username)}>Unban</button><button className="muteBtn" onClick={() => muteUser(user.username)}>Mute</button><button className="unmuteBtn" onClick={() => unmuteUser(user.username)}>Unmute</button></span>{user.username}</li>
-                                ))
-                            ) : <h3>No users found</h3>
-                        }
-                    </ul>
-                </div>)}
+                {
+                    isAdmin && 
+                    (<div className="allUsers-container">
+                        <h2>All users</h2>
+                        <ul>
+                            {
+                                fetchAllUsers ? (
+                                    fetchAllUsers.map((user, index) => (
+                                        <li key={index}><span><button className="banBtn" onClick={() => banUser(user.username)}>Ban</button><button className="unbanBtn" onClick={() => unbanUser(user.username)}>Unban</button><button className="muteBtn" onClick={() => muteUser(user.username)}>Mute</button><button className="unmuteBtn" onClick={() => unmuteUser(user.username)}>Unmute</button></span>{user.username}</li>
+                                    ))
+                                ) : <h3>No users found</h3>
+                            }
+                        </ul>
+                    </div>)
+                }
             </div>
         </div>
     )

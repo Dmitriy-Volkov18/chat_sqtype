@@ -1,16 +1,17 @@
 import React, {useEffect} from 'react'
 import './App.css';
 import {BrowserRouter as Router, Route, Switch} from "react-router-dom"
+
 import Header from "./components/Header/Header"
 import Login from "./components/Login/Login"
 import Chat from "./components/Chat/Chat"
-// import {getUser} from "./redux/actions/userActions"
 import PrivateRoute from './components/PrivateRoute/PrivateRoute'
+import ErrorAlert from "./components/ErrorAlert/ErrorAlert"
+
+import {getUser} from "./redux/actions/userActions"
 import {useDispatch} from "react-redux"
 import SocketContext from "./socketContext/socketContext"
-import ErrorAlert from "./components/ErrorAlert/ErrorAlert"
 import io from "socket.io-client";
-
 
 
 function App() {
@@ -21,9 +22,8 @@ function App() {
   const dispatch = useDispatch()
 
   useEffect(() => {
-      // dispatch(getUser())
+      dispatch(getUser())
   }, [dispatch])
-  // , [getUser]
 
 
   return (

@@ -24,7 +24,7 @@ const AllUsers = ({socket}) => {
             }
         })
         
-    }, [fetchAllUsers])
+    }, [fetchAllUsers, socket])
 
     const banUser = (username) => {
         socket.emit("banUser", username)

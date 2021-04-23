@@ -5,6 +5,4 @@ const userTypes = {
     LOGOUT: "LOGOUT",
 }
 
-
-
 export default userTypes
